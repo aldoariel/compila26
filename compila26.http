@@ -1,0 +1,225 @@
+@baseUrl = http://localhost:8080
+
+### Estado general de la aplicación
+GET {{baseUrl}}/
+Accept: text/plain
+
+### Estado del analizador léxico
+GET {{baseUrl}}/api/lexer/health
+Accept: application/json
+
+### Lexer - Caso 1: asignación simple
+POST {{baseUrl}}/api/lexer/analizar
+Content-Type: application/json
+Accept: application/json
+
+{
+  "codigo": "x = 10;"
+}
+
+### Lexer - Caso 2: expresión aritmética
+POST {{baseUrl}}/api/lexer/analizar
+Content-Type: application/json
+Accept: application/json
+
+{
+  "codigo": "x = 10 + 5 * 2;"
+}
+
+### Lexer - Caso 4: carácter inválido, representado como token ERROR
+POST {{baseUrl}}/api/lexer/analizar
+Content-Type: application/json
+Accept: application/json
+
+{
+  "codigo": "x = 10 @ 2;"
+}
+
+### Lexer - Error de request: código vacío
+POST {{baseUrl}}/api/lexer/analizar
+Content-Type: application/json
+Accept: application/json
+
+{
+  "codigo": ""
+}
+
+### Parser - Caso 1: asignación simple
+POST {{baseUrl}}/api/parser/analizar
+Content-Type: application/json
+Accept: application/json
+
+{
+  "codigo": "x = 10;"
+}
+
+### Parser - Caso 2: precedencia de operadores
+POST {{baseUrl}}/api/parser/analizar
+Content-Type: application/json
+Accept: application/json
+
+{
+  "codigo": "x = 10 + 5 * 2;"
+}
+
+### Parser - Caso 3: varias instrucciones
+POST {{baseUrl}}/api/parser/analizar
+Content-Type: application/json
+Accept: application/json
+
+{
+  "codigo": "x = 10; y = x + 5;"
+}
+
+### Parser - Caso 4: el token ERROR llega al parser
+POST {{baseUrl}}/api/parser/analizar
+Content-Type: application/json
+Accept: application/json
+
+{
+  "codigo": "x = 10 @ 2;"
+}
+
+### Parser - Caso 5: expresión incompleta
+POST {{baseUrl}}/api/parser/analizar
+Content-Type: application/json
+Accept: application/json
+
+{
+  "codigo": "x = 10 + ;"
+}
+
+### Parser - Error de request: código vacío, respondido con HTTP 200
+POST {{baseUrl}}/api/parser/analizar
+Content-Type: application/json
+Accept: application/json
+
+{
+  "codigo": ""
+}
+
+### Semántico - Caso 1: declaración explícita y asignación
+POST {{baseUrl}}/api/semantico/analizar
+Content-Type: application/json
+Accept: application/json
+
+{
+  "codigo": "int x; x = 10;"
+}
+
+### Semántico - Caso 2: expresión válida
+POST {{baseUrl}}/api/semantico/analizar
+Content-Type: application/json
+Accept: application/json
+
+{
+  "codigo": "int x; x = 10 + 5 * 2;"
+}
+
+### Semántico - Caso 3: varias instrucciones y uso posterior
+POST {{baseUrl}}/api/semantico/analizar
+Content-Type: application/json
+Accept: application/json
+
+{
+  "codigo": "int x; int y; x = 10; y = x + 5;"
+}
+
+### Semántico - Caso 5: error sintáctico impide análisis semántico
+POST {{baseUrl}}/api/semantico/analizar
+Content-Type: application/json
+Accept: application/json
+
+{
+  "codigo": "int x; x = 10 + ;"
+}
+
+### Semántico - Caso 6: variable no declarada
+POST {{baseUrl}}/api/semantico/analizar
+Content-Type: application/json
+Accept: application/json
+
+{
+  "codigo": "int x; x = y + 10;"
+}
+
+### Semántico - Error de request: código vacío, respondido con HTTP 200
+POST {{baseUrl}}/api/semantico/analizar
+Content-Type: application/json
+Accept: application/json
+
+{
+  "codigo": ""
+}
+
+### Intermedio - Código válido
+POST {{baseUrl}}/api/intermedio/generar
+Content-Type: application/json
+Accept: application/json
+
+{
+  "codigo": "int x; x = 10 + 5 * 2;"
+}
+
+### Intermedio - Error léxico
+POST {{baseUrl}}/api/intermedio/generar
+Content-Type: application/json
+Accept: application/json
+
+{
+  "codigo": "x = 10 @ 2;"
+}
+
+### Intermedio - Error sintáctico
+POST {{baseUrl}}/api/intermedio/generar
+Content-Type: application/json
+Accept: application/json
+
+{
+  "codigo": "int x; x = 10 + ;"
+}
+
+### Intermedio - Error semántico por variable no declarada
+POST {{baseUrl}}/api/intermedio/generar
+Content-Type: application/json
+Accept: application/json
+
+{
+  "codigo": "int x; x = y + 10;"
+}
+
+### Compiler - Compilación completa correcta
+POST {{baseUrl}}/api/compiler/compile
+Content-Type: application/json
+Accept: application/json
+
+{
+  "codigo": "int x; x = 10 + 5 * 2;"
+}
+
+### Compiler - Error léxico
+POST {{baseUrl}}/api/compiler/compile
+Content-Type: application/json
+Accept: application/json
+
+{
+  "codigo": "x = 10 @ 2;"
+}
+
+### Compiler - Error sintáctico con AST parcial
+POST {{baseUrl}}/api/compiler/compile
+Content-Type: application/json
+Accept: application/json
+
+{
+  "codigo": "int x; x = 10 + ;"
+}
+
+### Compiler - Error semántico por variable no declarada
+POST {{baseUrl}}/api/compiler/compile
+Content-Type: application/json
+Accept: application/json
+
+{
+  "codigo": "int x; x = y + 10;"
+}

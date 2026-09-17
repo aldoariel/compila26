@@ -1,0 +1,787 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Interfaz didáctica del compilador Compila26">
+    <title>Compila26 · Compilador Didáctico</title>
+    <link rel="stylesheet" href="/css/compila26.css">
+</head>
+<body>
+<header class="site-header">
+    <div>
+        <p class="eyebrow">Diseño de Compiladores</p>
+        <h1>Compila26</h1>
+        <p class="subtitle">Compilador Didáctico</p>
+    </div>
+    <div id="pipeline" class="pipeline" aria-label="Estado de las fases del compilador">
+        <span class="pipeline-step state-pending" data-phase="source"><b>○</b> Código</span>
+        <i>→</i>
+        <span class="pipeline-step state-pending" data-phase="lexical"><b>○</b> Léxico</span>
+        <i>→</i>
+        <span class="pipeline-step state-pending" data-phase="syntax"><b>○</b> Sintáctico</span>
+        <i>→</i>
+        <span class="pipeline-step state-pending" data-phase="semantic"><b>○</b> Semántico</span>
+        <i>→</i>
+        <span class="pipeline-step state-pending" data-phase="intermediate"><b>○</b> Intermedio</span>
+        <span aria-hidden="true">→</span>
+        <span class="pipeline-step state-pending" data-phase="neander"><b>○</b> NEANDER</span>
+    </div>
+</header>
+
+<nav class="curriculum-nav" aria-label="Navegación curricular">
+    <a href="#unidad-i">Unidad I</a>
+    <a href="#unidad-ii">Unidad II</a>
+    <a href="#unidad-vii">Unidad VII</a>
+    <a href="#unidad-viii">Unidad VIII</a>
+    <a href="#unidad-ix">Unidad IX</a>
+    <a href="#laboratorio">Compilador / Laboratorio</a>
+</nav>
+
+<div class="curriculum">
+    <section id="unidad-i" class="learning-unit" aria-labelledby="unidad-i-title">
+        <div class="unit-heading">
+            <div>
+                <p class="section-number">Fundamentos</p>
+                <h2 id="unidad-i-title">Unidad I - Introducción a los compiladores</h2>
+            </div>
+            <span class="unit-badge">Del lenguaje fuente a su traducción</span>
+        </div>
+
+        <div class="concept-grid concept-grid-three">
+            <article class="concept-card">
+                <h3>Compilador <button type="button" class="inline-help" data-topic="compiler" aria-label="Definición de compilador">?</button></h3>
+                <p>Traduce un programa fuente a otra representación antes de su ejecución.</p>
+            </article>
+            <article class="concept-card">
+                <h3>Intérprete <button type="button" class="inline-help" data-topic="interpreter" aria-label="Definición de intérprete">?</button></h3>
+                <p>Analiza y ejecuta instrucciones durante la ejecución, sin requerir necesariamente un programa objetivo previo.</p>
+            </article>
+            <article class="concept-card">
+                <h3>Procesadores de lenguaje</h3>
+                <p>Compiladores, intérpretes, ensambladores y preprocesadores transforman o ejecutan lenguajes.</p>
+            </article>
+        </div>
+
+        <div class="comparison-grid">
+            <article class="flow-card analysis-card">
+                <h3>Análisis <button type="button" class="inline-help" data-topic="analysis" aria-label="Explicación de análisis">?</button></h3>
+                <div class="vertical-flow" aria-label="Flujo de análisis">
+                    <span>Código fuente</span><i>↓</i><span>Léxico</span><i>↓</i><span>Sintáctico</span><i>↓</i><span>Semántico</span>
+                </div>
+                <p>Comprende la entrada y obtiene una representación validada.</p>
+            </article>
+            <article class="flow-card synthesis-card">
+                <h3>Síntesis <button type="button" class="inline-help" data-topic="synthesis" aria-label="Explicación de síntesis">?</button></h3>
+                <div class="vertical-flow" aria-label="Flujo de síntesis">
+                    <span>Representación intermedia</span><i>↓</i><span class="future-step">Generación de código</span><i>↓</i><span class="future-step">Código objetivo</span>
+                </div>
+                <p>Construye la salida. En Compila26, el código objetivo es una etapa futura.</p>
+            </article>
+        </div>
+
+        <article class="phase-map-card">
+            <div class="card-heading">
+                <div><p class="section-number">Mapa de Compila26</p><h3>Fases del compilador</h3></div>
+                <p>Selecciona una fase para conocer su función.</p>
+            </div>
+            <div class="phase-map" aria-label="Fases principales de Compila26">
+                <button type="button" data-topic="source">Código fuente</button><i>→</i>
+                <button type="button" data-topic="lexical">Léxico</button><i>→</i>
+                <button type="button" data-topic="tokens">Tokens</button><i>→</i>
+                <button type="button" data-topic="syntax">Sintáctico</button><i>→</i>
+                <button type="button" data-topic="ast">AST</button><i>→</i>
+                <button type="button" data-topic="semantic">Semántico</button><i>→</i>
+                <button type="button" data-topic="symbols">Tabla de símbolos</button><i>→</i>
+                <button type="button" data-topic="intermediate">Código intermedio</button><i>→</i>
+                <button type="button" class="future-step" data-topic="target">Código objetivo</button>
+            </div>
+            <p class="legend"><span>Implementado en Compila26</span><span class="future-legend">Etapa futura</span></p>
+        </article>
+    </section>
+
+    <section id="unidad-ii" class="learning-unit" aria-labelledby="unidad-ii-title">
+        <div class="unit-heading">
+            <div>
+                <p class="section-number">Lenguajes y reconocimiento</p>
+                <h2 id="unidad-ii-title">Unidad II - Aspectos formales</h2>
+            </div>
+            <span class="unit-badge">Gramáticas · Regex · Autómatas</span>
+        </div>
+
+        <div class="formal-grid">
+            <article class="theory-card grammar-card">
+                <div class="card-heading">
+                    <div><h3>Gramática real de Compila26</h3><p>Notación EBNF utilizada por el parser descendente recursivo.</p></div>
+                    <button type="button" class="inline-help" data-topic="bnf" aria-label="Ayuda sobre BNF y EBNF">?</button>
+                </div>
+                <pre class="grammar-code"><code>programa    → sentencia*
+sentencia   → declaracion | asignacion
+declaracion → 'int' IDENTIFICADOR ';'
+asignacion  → IDENTIFICADOR '=' expresion ';'
+expresion   → suma
+suma        → termino (('+' | '-') termino)*
+termino     → factor (('*' | '/') factor)*
+factor      → NUMERO | IDENTIFICADOR | '(' expresion ')'</code></pre>
+                <div class="notation-list">
+                    <button type="button" data-topic="nonterminal"><b>No terminal</b><span>expresion</span></button>
+                    <button type="button" data-topic="terminal"><b>Terminal</b><span>'int' o '+'</span></button>
+                    <button type="button" data-topic="production"><b>Producción</b><span>factor → ...</span></button>
+                    <button type="button" data-topic="alternative"><b>Alternativa</b><span>declaracion | asignacion</span></button>
+                    <button type="button" data-topic="repetition"><b>Repetición</b><span>sentencia*</span></button>
+                </div>
+            </article>
+
+            <article class="theory-card">
+                <div class="card-heading">
+                    <div><h3>Patrones léxicos</h3><p>Representación didáctica equivalente a las categorías reales del Lexer.</p></div>
+                    <button type="button" class="inline-help" data-topic="regex" aria-label="Ayuda sobre expresiones regulares">?</button>
+                </div>
+                <div class="pattern-list">
+                    <p><b>Reservadas</b><code>int | if | else | while | return</code></p>
+                    <p><b>Identificador</b><code>letra/_ (letra/dígito/_)*</code></p>
+                    <p><b>Número</b><code>dígito+</code></p>
+                    <p><b>Operador</b><code>&gt;= | &lt;= | == | != | &gt; | &lt; | + - * / =</code></p>
+                    <p><b>Delimitador</b><code>; ( ) { }</code></p>
+                    <p><b>Espacio</b><code>espacio, tabulación o salto de línea (se ignora)</code></p>
+                    <p><b>Error</b><code>cualquier carácter no reconocido</code></p>
+                </div>
+            </article>
+        </div>
+
+        <article class="theory-card token-examples-card">
+            <h3>De patrón a token</h3>
+            <div class="token-examples">
+                <div><code>int</code><i>→</i><span>PALABRA_CLAVE</span></div>
+                <div><code>x</code><i>→</i><span>IDENTIFICADOR</span></div>
+                <div><code>123</code><i>→</i><span>NUMERO</span></div>
+                <div><code>+</code><i>→</i><span>OPERADOR</span></div>
+                <div><code>;</code><i>→</i><span>DELIMITADOR</span></div>
+                <div><code>@</code><i>→</i><span>ERROR</span></div>
+            </div>
+        </article>
+
+        <div class="automata-grid">
+            <article class="theory-card">
+                <div class="card-heading">
+                    <div><h3>Autómata de identificador</h3><p>Modelo conceptual basado en la regla real del Lexer.</p></div>
+                    <button type="button" class="inline-help" data-topic="automaton" aria-label="Ayuda sobre autómatas finitos">?</button>
+                </div>
+                <div class="automaton" aria-label="Autómata conceptual de identificadores">
+                    <span class="state initial">q0</span><span class="transition">letra o _ →</span><span class="state accepting">q1</span>
+                    <span class="loop">↻ letra, dígito o _</span>
+                </div>
+                <p class="formula">EXPRESIÓN REGULAR → AUTÓMATA → TOKEN</p>
+            </article>
+
+            <article class="theory-card">
+                <h3>AFN y AFD</h3>
+                <div class="af-grid">
+                    <button type="button" data-topic="nfa"><b>AFN</b><span>Puede ofrecer varias transiciones posibles.</span></button>
+                    <button type="button" data-topic="dfa"><b>AFD</b><span>Determina una transición por estado y símbolo.</span></button>
+                </div>
+                <p class="concept-note">Ejemplo conceptual: reconocer <code>a | ab</code> puede expresarse primero como AFN y organizarse después como AFD. No representa el autómata completo de Compila26.</p>
+            </article>
+        </div>
+
+        <article class="theory-card transition-card">
+            <h3>Tabla de transición: IDENTIFICADOR</h3>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Estado</th><th>Letra / _</th><th>Dígito</th><th>Otro</th></tr></thead>
+                    <tbody>
+                    <tr><td><code>q0</code></td><td><code>q1</code></td><td>Error</td><td>Error</td></tr>
+                    <tr><td><code>q1</code></td><td><code>q1</code></td><td><code>q1</code></td><td>Aceptar token</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <p>Al encontrar “otro”, el identificador termina; ese carácter se procesa como inicio del siguiente token.</p>
+        </article>
+
+        <div class="unit-transition" aria-label="Transición de Unidad II a Unidad III">
+            <span>Aspectos formales</span><i>↓</i><span>Regex + autómatas</span><i>↓</i><span>Análisis léxico</span><i>↓</i><strong>Unidad III</strong>
+        </div>
+    </section>
+
+    <section id="unidad-vii" class="learning-unit" aria-labelledby="unidad-vii-title">
+        <div class="unit-heading">
+            <div>
+                <p class="section-number">Del programa traducido a su ejecución</p>
+                <h2 id="unidad-vii-title">Unidad VII - Organización en tiempo de ejecución</h2>
+            </div>
+            <span class="unit-badge">Memoria · Regiones · Asignación</span>
+        </div>
+
+        <div class="runtime-intro" aria-label="Relación entre compilación y ejecución">
+            <span>Código fuente</span><i>↓</i><span>Compilación</span><i>↓</i>
+            <span>Programa en ejecución</span><i>↓</i><strong>Necesidad de organizar memoria</strong>
+        </div>
+
+        <article class="theory-card runtime-section">
+            <div class="card-heading">
+                <div>
+                    <p class="section-number">7.1</p>
+                    <h3>Aspectos del lenguaje fuente</h3>
+                </div>
+                <button type="button" class="inline-help" data-topic="runtime-memory" aria-label="Ayuda sobre memoria en ejecución">?</button>
+            </div>
+            <div class="source-runtime-grid">
+                <pre class="runtime-code"><code>int x;
+int y;
+
+x = 10;
+y = x + 5;</code></pre>
+                <div class="language-features">
+                    <p><b>Declaraciones</b><span>Presentan identificadores que necesitarán almacenamiento.</span></p>
+                    <p><b>Variables</b><span>Representan valores que pueden cambiar durante la ejecución.</span></p>
+                    <p><b>Tipo int</b><span>Describe la clase de valores admitidos actualmente.</span></p>
+                    <p><b>Asignaciones y expresiones</b><span>Producen y actualizan valores mientras el programa opera.</span></p>
+                </div>
+            </div>
+            <p class="scope-note">Compila26 todavía no incorpora funciones, parámetros, ámbitos, arreglos ni asignación dinámica.</p>
+        </article>
+
+        <article class="symbol-memory-card">
+            <div class="symbol-memory-panel">
+                <p class="section-number">Durante la compilación</p>
+                <h3>Tabla de símbolos</h3>
+                <table>
+                    <thead><tr><th>Nombre</th><th>Tipo</th></tr></thead>
+                    <tbody><tr><td><code>x</code></td><td>int</td></tr><tr><td><code>y</code></td><td>int</td></tr></tbody>
+                </table>
+                <p>Estructura utilizada por el compilador para almacenar información sobre identificadores.</p>
+            </div>
+            <strong class="not-equal" aria-label="No es igual">≠</strong>
+            <div class="symbol-memory-panel">
+                <p class="section-number">Durante la ejecución</p>
+                <h3>Memoria en tiempo de ejecución</h3>
+                <div class="storage-needs"><span><code>x</code> necesita almacenamiento</span><span><code>y</code> necesita almacenamiento</span></div>
+                <p>Contiene la información necesaria mientras el programa está ejecutándose. Aquí no se asignan direcciones reales.</p>
+            </div>
+        </article>
+        <p class="core-statement">TABLA DE SÍMBOLOS ≠ MEMORIA</p>
+
+        <div class="runtime-layout-grid">
+            <article class="theory-card runtime-section">
+                <p class="section-number">7.2</p>
+                <h3>Organización de la memoria</h3>
+                <p>Modelo conceptual de organización de memoria. Compila26 todavía no implementa físicamente estas regiones.</p>
+                <div class="memory-layout" aria-label="Modelo conceptual de regiones de memoria">
+                    <button type="button" class="memory-code" data-topic="memory-code"><b>CÓDIGO</b><span>Instrucciones</span></button>
+                    <button type="button" class="memory-static" data-topic="static-data"><b>DATOS ESTÁTICOS</b><span>Datos conocidos</span></button>
+                    <button type="button" class="memory-heap" data-topic="heap"><b>HEAP / MONTÍCULO</b><span>Memoria dinámica</span></button>
+                    <button type="button" class="memory-stack" data-topic="stack"><b>STACK / PILA</b><span>Activaciones y control</span></button>
+                </div>
+            </article>
+
+            <article class="theory-card runtime-section">
+                <div class="card-heading">
+                    <div><p class="section-number">Dos momentos diferentes</p><h3>Compilación y ejecución</h3></div>
+                    <button type="button" class="inline-help" data-topic="compile-time" aria-label="Ayuda sobre tiempo de compilación">?</button>
+                </div>
+                <div class="time-comparison">
+                    <div>
+                        <h4>Tiempo de compilación</h4>
+                        <span>Lexer</span><span>Parser</span><span>AST</span><span>Semántico</span><span>Tabla de símbolos</span><span>Código intermedio</span>
+                    </div>
+                    <i>↓</i>
+                    <div>
+                        <h4>Tiempo de ejecución</h4>
+                        <button type="button" data-topic="memory-code">Código</button>
+                        <button type="button" data-topic="static-data">Datos</button>
+                        <button type="button" data-topic="stack">Pila</button>
+                        <button type="button" data-topic="heap">Heap</button>
+                    </div>
+                </div>
+            </article>
+        </div>
+
+        <article class="theory-card runtime-section">
+            <div class="card-heading">
+                <div><p class="section-number">7.3</p><h3>Estrategias para la asignación de memoria</h3></div>
+                <button type="button" class="inline-help" data-topic="allocation" aria-label="Ayuda sobre asignación de memoria">?</button>
+            </div>
+            <div class="strategy-grid">
+                <button type="button" data-topic="static-allocation"><b>Asignación estática</b><span>La ubicación se determina antes de ejecutar.</span></button>
+                <button type="button" data-topic="stack-allocation"><b>Asignación en pila</b><span>Administración LIFO asociada normalmente a activaciones.</span></button>
+                <button type="button" data-topic="dynamic-allocation"><b>Asignación dinámica / Heap</b><span>La memoria se solicita y libera según las necesidades.</span></button>
+            </div>
+            <div class="table-wrap strategy-table">
+                <table>
+                    <thead><tr><th>Estrategia</th><th>Momento</th><th>Uso conceptual</th></tr></thead>
+                    <tbody>
+                    <tr><td>Estática</td><td>Antes de ejecutar</td><td>Datos conocidos</td></tr>
+                    <tr><td>Pila</td><td>Durante la ejecución</td><td>Activaciones y variables locales</td></tr>
+                    <tr><td>Heap</td><td>Durante la ejecución</td><td>Datos dinámicos</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="scope-note">Las estrategias de pila y heap se presentan como conceptos generales; el lenguaje actual no posee funciones ni asignación dinámica.</p>
+        </article>
+
+        <article class="runtime-demo">
+            <p class="section-number">Demostración con Compila26</p>
+            <div class="demo-flow">
+                <span>Código fuente</span><i>↓</i><span>Declaraciones</span><i>↓</i>
+                <span>Tabla de símbolos: <code>x : int</code>, <code>y : int</code></span><i>↓</i>
+                <strong>Organización en ejecución: <code>x</code> e <code>y</code> necesitan almacenamiento</strong>
+            </div>
+            <p>Se representa la necesidad de almacenamiento, sin posiciones, offsets ni direcciones concretas.</p>
+        </article>
+
+        <div class="unit-transition unit-viii-transition" aria-label="Transición de Unidad VII a Unidad VIII">
+            <span>Organización en tiempo de ejecución</span><i>↓</i><span>Representación del programa</span><i>↓</i>
+            <span>Generación de código intermedio</span><i>↓</i><strong>Unidad VIII</strong>
+        </div>
+        <p class="transition-note">Una vez comprendida la organización necesaria durante la ejecución, el compilador puede utilizar representaciones intermedias que faciliten las etapas posteriores de traducción.</p>
+        <p class="future-path"><span>Código intermedio</span><i>→</i><span class="future-step">Generación de código</span><i>→</i><span class="future-step">Código objetivo</span></p>
+    </section>
+
+    <section id="unidad-viii" class="learning-unit" aria-labelledby="unidad-viii-title">
+        <div class="unit-heading">
+            <div>
+                <p class="section-number">Del AST a operaciones simples</p>
+                <h2 id="unidad-viii-title">Unidad VIII - Generación de código intermedio</h2>
+            </div>
+            <span class="unit-badge">AST · Temporales · Tres direcciones</span>
+        </div>
+
+        <div class="ir-main-flow" aria-label="Transformación hacia código intermedio">
+            <button type="button" data-topic="source">Código fuente</button><i>↓</i>
+            <button type="button" data-topic="ast">AST</button><i>↓</i>
+            <button type="button" data-topic="ir">Representación intermedia</button><i>↓</i>
+            <button type="button" data-topic="three-address">Código de tres direcciones</button>
+        </div>
+
+        <article class="theory-card ir-section">
+            <div class="card-heading">
+                <div><p class="section-number">8.1</p><h3>Lenguajes intermedios</h3></div>
+                <button type="button" class="inline-help" data-topic="ir" aria-label="Ayuda sobre representación intermedia">?</button>
+            </div>
+            <p>Una representación intermedia se ubica entre el análisis del lenguaje y la traducción para una máquina objetivo.</p>
+            <div class="frontend-backend-flow">
+                <div><b>Código fuente</b><span>Entrada del lenguaje</span></div><i>→</i>
+                <div><b>Front-end</b><span>Léxico, sintáctico y semántico</span></div><i>→</i>
+                <div class="ir-highlight"><b>Representación intermedia</b><span>Independiente de máquina</span></div><i>→</i>
+                <div class="future-step"><b>Back-end</b><span>Próxima etapa</span></div><i>→</i>
+                <div class="future-step"><b>Código objetivo</b><span>Próxima etapa</span></div>
+            </div>
+            <div class="ir-representations">
+                <button type="button" data-topic="ast"><b>AST</b><span>Representación estructural y jerárquica.</span></button>
+                <button type="button" data-topic="three-address"><b>Código de tres direcciones</b><span>Representación lineal de operaciones sencillas.</span></button>
+            </div>
+            <p class="scope-note">Compila26 conserva esta representación independiente para que un backend futuro pueda consumirla sin alterar el análisis del lenguaje.</p>
+        </article>
+
+        <article class="theory-card ir-section">
+            <div class="card-heading">
+                <div><p class="section-number">Resultado real de Compila26</p><h3>Código de tres direcciones</h3></div>
+                <button type="button" class="inline-help" data-topic="three-address" aria-label="Ayuda sobre código de tres direcciones">?</button>
+            </div>
+            <div class="three-address-demo">
+                <pre class="runtime-code"><code>int x;
+x = 10 + 5 * 2;</code></pre>
+                <div class="expression-arrow"><code>10 + 5 * 2</code><i>↓</i></div>
+                <pre class="ir-code"><code>t0 = 5 * 2
+t1 = 10 + t0
+x = t1</code></pre>
+            </div>
+            <p>Cada instrucción expresa una operación simple. Los temporales conservan resultados intermedios durante la traducción.</p>
+        </article>
+
+        <div class="ir-detail-grid">
+            <article class="theory-card anatomy-card">
+                <h3>Anatomía de una instrucción</h3>
+                <p>Ejemplo didáctico fijo basado en una instrucción real. La API actual devuelve la versión textual, no sus campos estructurados.</p>
+                <div class="instruction-anatomy" aria-label="Partes de t0 igual a 5 por 2">
+                    <button type="button" data-topic="ir-result"><code>t0</code><span>resultado</span></button>
+                    <b>=</b>
+                    <button type="button" data-topic="operand"><code>5</code><span>operando 1</span></button>
+                    <button type="button" data-topic="operator"><code>*</code><span>operador</span></button>
+                    <button type="button" data-topic="operand"><code>2</code><span>operando 2</span></button>
+                </div>
+            </article>
+            <article class="theory-card temporary-card">
+                <h3>Temporales</h3>
+                <div class="temporary-flow">
+                    <span><code>5 * 2</code><i>↓</i><button type="button" data-topic="temporary"><code>t0</code></button></span>
+                    <span><code>10 + t0</code><i>↓</i><button type="button" data-topic="temporary"><code>t1</code></button></span>
+                </div>
+                <p><code>t0</code>, <code>t1</code>, … son creados por el generador; no representan registros físicos ni direcciones.</p>
+            </article>
+        </div>
+
+        <article class="theory-card ir-section">
+            <h3>Precedencia: el AST decide el orden</h3>
+            <div class="ast-ir-grid">
+                <pre class="ast-example"><code>ASIGNACION
+├── ID: x
+└── OPERADOR: +
+    ├── NUMERO: 10
+    └── OPERADOR: *
+        ├── NUMERO: 5
+        └── NUMERO: 2</code></pre>
+                <span class="ast-to-ir">→</span>
+                <pre class="ir-code"><code>t0 = 5 * 2
+t1 = 10 + t0
+x = t1</code></pre>
+            </div>
+            <p>El generador no vuelve a decidir la precedencia: recorre primero la multiplicación, ya representada como subexpresión de la suma.</p>
+        </article>
+
+        <article class="theory-card ir-section">
+            <div class="card-heading">
+                <div><p class="section-number">8.2</p><h3>Declaraciones</h3></div>
+                <button type="button" class="inline-help" data-topic="declaration" aria-label="Ayuda sobre declaraciones">?</button>
+            </div>
+            <div class="declaration-flow">
+                <code>int x;</code><i>↓</i><span><b>DECLARACION: int</b><small>└── ID: x</small></span><i>↓</i><span><b>Tabla de símbolos</b><small>x : int</small></span>
+            </div>
+            <div class="declaration-assignment-grid">
+                <div><h4>Declaración</h4><code>int x;</code><p>Introduce el identificador y su tipo.</p><strong>Resultado actual: <code>x : int</code> en la tabla.</strong></div>
+                <div><h4>Asignación</h4><code>x = 10;</code><p>Asocia un valor con una variable declarada.</p><strong>Intermedio actual: <code>x = 10</code>.</strong></div>
+            </div>
+            <p class="scope-note">En el modelo intermedio actual de Compila26, una declaración aislada no genera una instrucción de tres direcciones. No es una regla universal.</p>
+        </article>
+
+        <article class="theory-card ir-section">
+            <div class="card-heading">
+                <div><p class="section-number">8.3</p><h3>Asignaciones</h3></div>
+                <button type="button" class="inline-help" data-topic="assignment" aria-label="Ayuda sobre asignaciones">?</button>
+            </div>
+            <div class="assignment-cases">
+                <div><b>Caso A · constante</b><pre><code>int x;
+x = 10;</code></pre><pre class="case-result"><code>x = 10</code></pre></div>
+                <div><b>Caso B · expresión</b><pre><code>int x;
+x = 10 + 5;</code></pre><pre class="case-result"><code>t0 = 10 + 5
+x = t0</code></pre></div>
+                <div><b>Caso C · precedencia</b><pre><code>int x;
+x = 10 + 5 * 2;</code></pre><pre class="case-result"><code>t0 = 5 * 2
+t1 = 10 + t0
+x = t1</code></pre></div>
+            </div>
+        </article>
+
+        <article class="runtime-demo ir-multiple-demo">
+            <p class="section-number">Declaraciones y varias variables</p>
+            <div class="source-runtime-grid">
+                <pre class="runtime-code"><code>int x;
+int y;
+x = 10;
+y = x + 5;</code></pre>
+                <pre class="ir-code"><code>x = 10
+t0 = x + 5
+y = t0</code></pre>
+            </div>
+            <p>Resultado real: declaraciones → tabla de símbolos → asignaciones → expresiones → código intermedio.</p>
+        </article>
+
+        <div class="laboratory-callout">
+            <div><b>Experimenta con el pipeline real</b><span>El Laboratorio permite observar tokens, AST, semántica y estas instrucciones.</span></div>
+            <a href="#laboratorio" id="try-ir-example" data-code="int x;&#10;x = 10 + 5 * 2;">Probar en el Laboratorio</a>
+        </div>
+
+        <div class="unit-ix-transition" aria-label="Transición de Unidad VIII a Unidad IX">
+            <span>Código fuente</span><i>↓</i><span>AST</span><i>↓</i><strong>Código intermedio</strong>
+            <hr><i>↓</i><span class="future-step">Generación de código · Próxima etapa</span><i>↓</i>
+            <span class="future-step">Código objetivo · Unidad IX</span>
+        </div>
+    </section>
+
+    <section id="unidad-ix" class="learning-unit" aria-labelledby="unidad-ix-title">
+        <div class="unit-heading">
+            <div>
+                <p class="section-number">Parte 1 · El problema de la traducción final</p>
+                <h2 id="unidad-ix-title">Unidad IX - Generación y optimización de código</h2>
+            </div>
+            <span class="unit-badge">Asignación · Direccionamiento · Selección</span>
+        </div>
+
+        <div class="codegen-overview" aria-label="Etapas conceptuales de generación de código">
+            <button type="button" data-topic="ir">Código intermedio</button><i>↓</i>
+            <button type="button" data-topic="abstract-location">Asignación / direccionamiento</button><i>↓</i>
+            <button type="button" data-topic="instruction-selection">Selección de instrucciones</button><i>↓</i>
+            <button type="button" data-topic="code-generation">Generación de código</button><i>↓</i>
+            <button type="button" class="future-step" data-topic="target-code">Código objetivo</button><i>↓</i>
+            <button type="button" class="future-step" data-topic="target-machine">Máquina objetivo</button>
+        </div>
+
+        <article class="theory-card codegen-section">
+            <h3>Código intermedio ≠ código objetivo</h3>
+            <div class="target-comparison">
+                <div>
+                    <p class="section-number">Existe en Compila26</p>
+                    <h4>Código intermedio</h4>
+                    <pre class="ir-code"><code>t0 = 5 * 2
+t1 = 10 + t0
+x = t1</code></pre>
+                    <ul><li>Independiente de una máquina.</li><li>Operaciones abstractas.</li><li>Utiliza temporales.</li><li>Facilita la traducción posterior.</li></ul>
+                </div>
+                <strong>≠</strong>
+                <div class="future-target-panel">
+                    <p class="section-number">Etapa futura</p>
+                    <h4>Código objetivo <button type="button" class="inline-help" data-topic="target-code" aria-label="Ayuda sobre código objetivo">?</button></h4>
+                    <div class="unknown-code">Depende de la máquina objetivo seleccionada.</div>
+                    <ul><li>Depende de una arquitectura.</li><li>Usa sus instrucciones disponibles.</li><li>Considera memoria y direccionamiento.</li><li>Respeta restricciones de recursos.</li></ul>
+                </div>
+            </div>
+        </article>
+
+        <article class="theory-card codegen-section">
+            <p class="section-number">Ejemplo central</p>
+            <h3>Del programa fuente a la máquina objetivo NEANDER</h3>
+            <div class="central-codegen-flow">
+                <pre class="runtime-code"><code>int x;
+x = 10 + 5 * 2;</code></pre><i>↓</i>
+                <button type="button" data-topic="ast">AST</button><i>↓</i>
+                <pre class="ir-code"><code>t0 = 5 * 2
+t1 = 10 + t0
+x = t1</code></pre><i>↓</i>
+                <button type="button" data-topic="code-generation">Generación de código</button><i>↓</i>
+                <div class="unknown-code">Código objetivo<br><small>Depende de la máquina objetivo seleccionada.</small></div>
+            </div>
+        </article>
+
+        <div class="codegen-two-columns">
+            <article class="theory-card">
+                <h3>¿Qué necesita almacenamiento?</h3>
+                <div class="table-wrap compact-table">
+                    <table><thead><tr><th>Elemento</th><th>Clase</th></tr></thead>
+                        <tbody><tr><td><code>x</code></td><td>Variable</td></tr><tr><td><code>t0</code></td><td>Temporal</td></tr><tr><td><code>t1</code></td><td>Temporal</td></tr></tbody>
+                    </table>
+                </div>
+                <p>El backend deberá decidir cómo representar estos elementos. Un temporal podría permanecer en memoria, en otro recurso o incluso desaparecer; depende de la arquitectura y estrategia.</p>
+            </article>
+            <article class="theory-card">
+                <div class="card-heading">
+                    <div><p class="section-number">Modelo didáctico</p><h3>Asignación abstracta</h3></div>
+                    <button type="button" class="inline-help" data-topic="abstract-location" aria-label="Ayuda sobre ubicaciones abstractas">?</button>
+                </div>
+                <div class="table-wrap compact-table">
+                    <table><thead><tr><th>Elemento</th><th>Tipo</th><th>Ubicación</th></tr></thead>
+                        <tbody><tr><td><code>x</code></td><td>Variable</td><td><code>M0</code></td></tr><tr><td><code>t0</code></td><td>Temporal</td><td><code>M1</code></td></tr><tr><td><code>t1</code></td><td>Temporal</td><td><code>M2</code></td></tr></tbody>
+                    </table>
+                </div>
+                <p class="scope-note"><code>M0</code>, <code>M1</code> y <code>M2</code> son ubicaciones abstractas didácticas, no direcciones reales.</p>
+            </article>
+        </div>
+
+        <article class="symbol-allocation-card">
+            <div><p class="section-number">Información de compilación</p><h3>Tabla de símbolos</h3><code>x : int</code><p>Describe nombre y tipo.</p></div>
+            <strong>≠</strong>
+            <div><p class="section-number">Decisión para código objetivo</p><h3>Asignación abstracta</h3><code>x → M0</code><p>Propone dónde localizar el dato.</p></div>
+        </article>
+
+        <div class="codegen-two-columns">
+            <article class="theory-card addressing-card">
+                <div class="card-heading"><div><h3>Direccionamiento</h3><p>Determina cómo una instrucción localiza o accede a un dato.</p></div><button type="button" class="inline-help" data-topic="addressing" aria-label="Ayuda sobre direccionamiento">?</button></div>
+                <div class="address-flow"><span>Instrucción</span><i>↓</i><span>Referencia a <code>x</code></span><i>↓</i><strong>Ubicación abstracta <code>M0</code></strong></div>
+                <p>No se presentan modos de direccionamiento ni direcciones de una arquitectura concreta.</p>
+            </article>
+            <article class="theory-card">
+                <h3>Asignación estática y dinámica</h3>
+                <div class="allocation-review">
+                    <button type="button" data-topic="static-allocation"><b>Estática</b><span>Puede decidirse antes de ejecutar.</span></button>
+                    <button type="button" data-topic="dynamic-allocation"><b>Dinámica</b><span>Se determina durante la ejecución.</span></button>
+                </div>
+                <p class="scope-note">Compila26 solo posee <code>int</code>; no tiene objetos, <code>new</code>, arrays dinámicos, funciones ni parámetros. La asignación dinámica no se implementa aquí.</p>
+            </article>
+        </div>
+
+        <article class="theory-card codegen-section">
+            <div class="card-heading">
+                <div><h3>Selección de instrucciones</h3><p>Una operación intermedia debe traducirse usando las capacidades reales de la máquina.</p></div>
+                <button type="button" class="inline-help" data-topic="instruction-selection" aria-label="Ayuda sobre selección de instrucciones">?</button>
+            </div>
+            <div class="selection-flow">
+                <span><small>Operación intermedia</small><code>5 * 2</code></span><i>↓</i>
+                <span class="question-step">¿Qué instrucciones proporciona la máquina objetivo?</span><i>↓</i>
+                <strong>Selección de instrucciones</strong><i>↓</i>
+                <span class="future-step">Secuencia de instrucciones objetivo</span>
+            </div>
+            <div class="multiplication-note">
+                <b>El caso especial de la multiplicación</b>
+                <p>Una máquina podría ofrecer multiplicación directa, carecer de ella, requerir varias instrucciones o necesitar una rutina. Esta Parte 1 no decide cuál será el caso.</p>
+            </div>
+        </article>
+
+        <article class="theory-card codegen-section">
+            <h3>Frontera del compilador</h3>
+            <div class="compiler-boundary">
+                <div><p class="section-number">Front-end</p><span>Código fuente → Lexer → Parser → AST → Semántico</span></div>
+                <i>↓</i><strong>List&lt;InstruccionIntermedia&gt;</strong><i>↓</i>
+                <div><p class="section-number">Back-end del compilador</p><span>Asignación → Selección → Generación → Código objetivo</span></div>
+            </div>
+            <p class="scope-note">Aquí “back-end” significa la parte del compilador que produce código objetivo; no es el backend web de Spring Boot.</p>
+        </article>
+
+        <div class="codegen-two-columns">
+            <article class="theory-card">
+                <div class="card-heading"><div><h3>¿Qué es una máquina objetivo?</h3><p>Arquitectura para la cual se genera el código final.</p></div><button type="button" class="inline-help" data-topic="target-machine" aria-label="Ayuda sobre máquina objetivo">?</button></div>
+                <div class="next-step-box">Máquina seleccionada<br><strong>NEANDER: acumulador, memoria y direccionamiento directo.</strong></div>
+            </article>
+            <article class="theory-card optimization-card">
+                <div class="card-heading"><div><h3>Optimización de código</h3><p>Busca mejorar el código sin cambiar el significado.</p></div><button type="button" class="inline-help" data-topic="optimization" aria-label="Ayuda sobre optimización">?</button></div>
+                <ul><li>Eliminar operaciones innecesarias.</li><li>Reducir instrucciones.</li><li>Reutilizar resultados.</li><li>Mejorar el uso de recursos.</li></ul>
+                <div class="folding-example"><span><code>x = 2 + 3</code></span><i>→</i><span><code>x = 5</code></span><button type="button" data-topic="constant-folding">Plegado de constantes</button></div>
+                <p class="scope-note">Ejemplo conceptual: Compila26 todavía no realiza esta optimización.</p>
+            </article>
+        </div>
+
+        <div class="laboratory-callout">
+            <div><b>Observa primero la representación intermedia</b><span>Después pregúntate: ¿cómo traducimos estas operaciones a una máquina real?</span></div>
+            <a href="#laboratorio" id="try-codegen-example" data-code="int x;&#10;x = 10 + 5 * 2;">Generar código intermedio en el Laboratorio</a>
+        </div>
+
+        <div class="part-two-transition" aria-label="Preparación para Unidad IX Parte 2">
+            <span>Código intermedio</span><i>↓</i><span>Asignación</span><i>↓</i><span>Direccionamiento</span><i>↓</i>
+            <span>Selección de instrucciones</span><i>↓</i><span>Máquina objetivo</span><i>↓</i><strong>?</strong>
+        </div>
+        <p class="transition-note">Compila26 permite observar una primera selección de instrucciones para NEANDER; multiplicación, división y ejecución permanecen deliberadamente fuera de alcance.</p>
+    </section>
+</div>
+
+<main id="laboratorio" class="workspace">
+    <section class="panel source-panel" aria-labelledby="source-title">
+        <div class="panel-heading">
+            <div>
+                <p class="section-number">Entrada</p>
+                <h2 id="source-title">Código fuente</h2>
+            </div>
+            <span class="language-badge">Compila26</span>
+        </div>
+
+        <form id="compile-form">
+            <label class="sr-only" for="source-code">Código fuente</label>
+            <textarea id="source-code" spellcheck="false">int x;
+x = 10 + 5 * 2;</textarea>
+
+            <div class="examples" aria-label="Ejemplos">
+                <button type="button" class="example-button" data-code="int a;&#10;int b;&#10;int x;&#10;a = 10;&#10;b = 5;&#10;x = a + b;">NEANDER: suma</button>
+                <button type="button" class="example-button" data-code="int a;&#10;int b;&#10;int x;&#10;a = 10;&#10;b = 5;&#10;x = a - b;">NEANDER: resta</button>
+                <button type="button" class="example-button" data-code="int x;&#10;x = 10 * 5;">Límite NEANDER</button>
+                <button type="button" class="example-button" data-code="int x;&#10;x = 10 + 5 * 2;">Ejemplo correcto</button>
+                <button type="button" class="example-button" data-code="int x;&#10;x = 10 + ;">Error sintáctico</button>
+                <button type="button" class="example-button" data-code="int x;&#10;x = y + 10;">Error semántico</button>
+            </div>
+
+            <button id="compile-button" class="compile-button" type="submit">
+                <span>Compilar</span>
+                <span aria-hidden="true">▶</span>
+            </button>
+        </form>
+    </section>
+
+    <section class="panel result-panel" aria-labelledby="result-title">
+        <div class="panel-heading result-heading">
+            <div>
+                <p class="section-number">Salida</p>
+                <h2 id="result-title">Resultado de compilación</h2>
+            </div>
+            <div id="compile-status" class="status status-idle" role="status">Listo para compilar</div>
+        </div>
+
+        <p id="result-message" class="result-message">
+            Ejecuta el programa para observar cada fase del compilador.
+        </p>
+
+        <nav class="tabs" aria-label="Resultados por fase">
+            <button type="button" class="tab active" data-panel="tokens-panel" aria-selected="true">Léxico / Tokens</button>
+            <button type="button" class="tab" data-panel="ast-panel" aria-selected="false">Sintáctico / AST</button>
+            <button type="button" class="tab" data-panel="semantic-panel" aria-selected="false">Semántico</button>
+            <button type="button" class="tab" data-panel="intermediate-panel" aria-selected="false">Código intermedio</button>
+            <button type="button" class="tab" data-panel="neander-panel" aria-selected="false">Código objetivo / NEANDER</button>
+        </nav>
+
+        <div class="tab-content">
+            <section id="tokens-panel" class="tab-panel active" aria-label="Tokens">
+                <div class="phase-heading">
+                    <div><span class="phase-kicker">Fase 1</span><h3>Análisis léxico</h3></div>
+                    <button type="button" class="help-button" data-help="lexical" aria-label="Ayuda sobre análisis léxico">?</button>
+                </div>
+                <div id="lexical-errors"></div>
+                <div id="tokens-content" class="empty-state">Los tokens aparecerán aquí.</div>
+            </section>
+
+            <section id="ast-panel" class="tab-panel" aria-label="Árbol sintáctico" hidden>
+                <div class="phase-heading">
+                    <div><span class="phase-kicker">Fase 2</span><h3>Análisis sintáctico</h3></div>
+                    <button type="button" class="help-button" data-help="syntax" aria-label="Ayuda sobre análisis sintáctico">?</button>
+                </div>
+                <div id="syntax-errors"></div>
+                <div id="ast-content" class="empty-state">El AST aparecerá aquí.</div>
+            </section>
+
+            <section id="semantic-panel" class="tab-panel" aria-label="Análisis semántico" hidden>
+                <div class="phase-heading">
+                    <div><span class="phase-kicker">Fase 3</span><h3>Análisis semántico</h3></div>
+                    <button type="button" class="help-button" data-help="semantic" aria-label="Ayuda sobre análisis semántico">?</button>
+                </div>
+                <div class="semantic-grid">
+                    <article>
+                        <h3>Errores semánticos</h3>
+                        <div id="semantic-errors" class="empty-state">Sin resultados todavía.</div>
+                    </article>
+                    <article>
+                        <h3>Tabla de símbolos</h3>
+                        <div id="symbols-content" class="empty-state">Sin resultados todavía.</div>
+                    </article>
+                </div>
+            </section>
+
+            <section id="intermediate-panel" class="tab-panel" aria-label="Código intermedio" hidden>
+                <div class="phase-heading">
+                    <div><span class="phase-kicker">Fase 4</span><h3>Código intermedio</h3></div>
+                    <div class="phase-actions">
+                        <button type="button" class="text-help-button" data-help="intermediate-detail">¿Qué estoy viendo?</button>
+                        <button type="button" class="help-button" data-help="intermediate" aria-label="Ayuda sobre código intermedio">?</button>
+                    </div>
+                </div>
+                <div id="intermediate-content" class="empty-state">Las instrucciones aparecerán aquí.</div>
+            </section>
+
+            <section id="neander-panel" class="tab-panel" aria-label="Código objetivo NEANDER" hidden>
+                <div class="phase-heading">
+                    <div><span class="phase-kicker">Fase 5</span><h3>Código objetivo / NEANDER</h3></div>
+                    <div class="phase-actions">
+                        <button type="button" class="text-help-button" data-help="neander-detail">¿Qué estoy viendo?</button>
+                        <button type="button" class="help-button" data-help="neander" aria-label="Ayuda sobre NEANDER">?</button>
+                    </div>
+                </div>
+                <div id="neander-diagnostics"></div>
+                <div class="neander-grid">
+                    <article>
+                        <h3>Instrucciones ensamblador</h3>
+                        <div id="neander-content" class="empty-state">Las instrucciones NEANDER aparecerán aquí.</div>
+                    </article>
+                    <article>
+                        <h3>Datos / memoria</h3>
+                        <div id="neander-data" class="empty-state">Las asignaciones de memoria aparecerán aquí.</div>
+                    </article>
+                </div>
+            </section>
+        </div>
+    </section>
+</main>
+
+<footer>
+    <span>Compila26</span>
+    <span>Frontend → Representación intermedia → Backend NEANDER</span>
+</footer>
+
+<div id="didactic-modal" class="modal" hidden>
+    <div class="modal-backdrop" data-modal-close></div>
+    <section class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-title" tabindex="-1">
+        <button type="button" class="modal-close" data-modal-close aria-label="Cerrar ventana">×</button>
+        <p class="section-number">Compila26 explica</p>
+        <h2 id="modal-title">Detalle</h2>
+        <div id="modal-content" class="modal-content"></div>
+        <div class="modal-footer">
+            <button type="button" class="modal-button" data-modal-close>Cerrar</button>
+        </div>
+    </section>
+</div>
+
+<script src="/js/compila26.js" defer></script>
+</body>
+</html>
