@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: compila26
+    runtime: docker
+    plan: free
+    repo: https://github.com/aldoariel/compila26
+    branch: main
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /
