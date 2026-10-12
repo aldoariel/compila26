@@ -21,7 +21,7 @@ public class ParserController {
             @RequestBody CodigoRequest request) {
 
         ParserService.ResultadoParser resultado =
-                parserService.analizar(request.codigo());
+                parserService.analizar(request == null ? null : request.codigo());
 
         return ResponseEntity.ok(resultado);
     }

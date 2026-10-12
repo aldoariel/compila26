@@ -2,9 +2,9 @@ package edu.fpune.compila26.service;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import edu.fpune.compila26.lexico.Lexer;
 import edu.fpune.compila26.lexico.Token;
 import edu.fpune.compila26.semantico.AnalizadorSemantico;
 import edu.fpune.compila26.sintactico.NodoAST;
@@ -13,10 +13,15 @@ import edu.fpune.compila26.sintactico.Parser;
 @Service
 public class SemanticoService {
 
-    private final Lexer lexer;
+    private final ValidadorCodigoFuente validadorCodigoFuente;
 
     public SemanticoService() {
-        this.lexer = new Lexer();
+        this(new ValidadorCodigoFuente());
+    }
+
+    @Autowired
+    public SemanticoService(ValidadorCodigoFuente validadorCodigoFuente) {
+        this.validadorCodigoFuente = validadorCodigoFuente;
     }
 
     /**
@@ -33,6 +38,8 @@ public class SemanticoService {
      * Analizador semántico
      */
     public ResultadoSemantico analizar(String codigo) {
+
+        validadorCodigoFuente.validarTamanio(codigo);
 
         // =========================================
         // VALIDACIÓN
@@ -52,8 +59,18 @@ public class SemanticoService {
         // 1. ANÁLISIS LÉXICO
         // =========================================
 
-        List<Token> tokens =
-                lexer.analizar(codigo);
+        AnalisisLexicoFuente.Resultado resultadoLexico =
+                AnalisisLexicoFuente.analizar(codigo);
+        List<Token> tokens = resultadoLexico.tokens();
+
+        if (resultadoLexico.tieneErrores()) {
+            return new ResultadoSemantico(
+                    false,
+                    "Se encontraron errores l\u00e9xicos.",
+                    resultadoLexico.errores(),
+                    List.of()
+            );
+        }
 
         // =========================================
         // 2. ANÁLISIS SINTÁCTICO

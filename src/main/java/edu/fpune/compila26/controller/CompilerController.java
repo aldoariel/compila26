@@ -23,10 +23,11 @@ public class CompilerController {
             @RequestBody CodigoRequest request) {
 
         String codigo = request == null ? null : request.codigo();
+        boolean incluirTraza = request != null && Boolean.TRUE.equals(request.incluirTraza());
 
-        return ResponseEntity.ok(compilerService.compilar(codigo));
+        return ResponseEntity.ok(compilerService.compilar(codigo, incluirTraza));
     }
 
-    public record CodigoRequest(String codigo) {
+    public record CodigoRequest(String codigo, Boolean incluirTraza) {
     }
 }

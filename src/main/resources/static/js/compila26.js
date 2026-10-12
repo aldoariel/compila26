@@ -14,11 +14,31 @@ const intermediateContent = document.querySelector("#intermediate-content");
 const neanderDiagnostics = document.querySelector("#neander-diagnostics");
 const neanderContent = document.querySelector("#neander-content");
 const neanderData = document.querySelector("#neander-data");
+const syntaxLabEnabled = document.querySelector("#syntax-lab-enabled");
+const labStepCounter = document.querySelector("#lab-step-counter");
+const labNotice = document.querySelector("#lab-notice");
+const labPrevious = document.querySelector("#lab-previous");
+const labNext = document.querySelector("#lab-next");
+const labPlay = document.querySelector("#lab-play");
+const labPause = document.querySelector("#lab-pause");
+const labReset = document.querySelector("#lab-reset");
+const labSource = document.querySelector("#lab-source");
+const labLocation = document.querySelector("#lab-location");
+const labEvent = document.querySelector("#lab-event");
+const labProduction = document.querySelector("#lab-production");
+const labFunction = document.querySelector("#lab-function");
+const labBuiltNode = document.querySelector("#lab-built-node");
+const labAstLabel = document.querySelector("#lab-ast-label");
+const labAstContent = document.querySelector("#lab-ast-content");
 const modal = document.querySelector("#didactic-modal");
 const modalDialog = modal.querySelector(".modal-dialog");
 const modalTitle = document.querySelector("#modal-title");
 const modalContent = document.querySelector("#modal-content");
 let previousFocus = null;
+let syntaxTrace = [];
+let syntaxTraceIndex = -1;
+let syntaxTraceTimer = null;
+let syntaxLabSource = "";
 
 const phaseHelp = {
     lexical: ["Análisis léxico", "Convierte el código fuente en una secuencia de tokens."],
@@ -129,6 +149,12 @@ document.querySelectorAll(".tab").forEach((tab) => {
     tab.addEventListener("click", () => activateTab(tab));
 });
 
+labPrevious.addEventListener("click", () => showTraceStep(syntaxTraceIndex - 1));
+labNext.addEventListener("click", () => showTraceStep(syntaxTraceIndex + 1));
+labPlay.addEventListener("click", playSyntaxTrace);
+labPause.addEventListener("click", pauseSyntaxTrace);
+labReset.addEventListener("click", resetSyntaxPlayback);
+
 document.querySelectorAll("[data-help]").forEach((button) => {
     button.addEventListener("click", () => {
         const [title, explanation] = phaseHelp[button.dataset.help];
@@ -155,16 +181,22 @@ document.addEventListener("keydown", (event) => {
 
 compileForm.addEventListener("submit", async (event) => {
     event.preventDefault();
+    pauseSyntaxTrace();
+    resetSyntaxLab("Solicitando una nueva compilación…");
     setLoading(true);
 
     try {
+        const request = {codigo: sourceCode.value};
+        if (syntaxLabEnabled.checked) {
+            request.incluirTraza = true;
+        }
         const response = await fetch("/api/compiler/compile", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json"
             },
-            body: JSON.stringify({codigo: sourceCode.value})
+            body: JSON.stringify(request)
         });
 
         if (!response.ok) {
@@ -185,6 +217,9 @@ compileForm.addEventListener("submit", async (event) => {
 });
 
 function activateTab(selectedTab) {
+    if (selectedTab.dataset.panel === "syntax-lab-panel") {
+        syntaxLabEnabled.checked = true;
+    }
     document.querySelectorAll(".tab").forEach((tab) => {
         const active = tab === selectedTab;
         tab.classList.toggle("active", active);
@@ -196,6 +231,221 @@ function activateTab(selectedTab) {
         panel.classList.toggle("active", active);
         panel.hidden = !active;
     });
+}
+
+function renderSyntaxLab(result) {
+    pauseSyntaxTrace();
+    syntaxLabSource = result.codigoFuente || "";
+    syntaxTrace = Array.isArray(result.trazaSintactica) ? result.trazaSintactica : [];
+    syntaxTraceIndex = -1;
+
+    if (!Object.hasOwn(result, "trazaSintactica")) {
+        resetSyntaxLab("La compilación ordinaria no solicitó una traza. Activa el laboratorio y vuelve a compilar.");
+        renderLabAst(result.ast, result.erroresSintacticos || []);
+        return;
+    }
+
+    renderLabAst(result.ast, result.erroresSintacticos || []);
+
+    if (result.trazaSintacticaTruncada) {
+        labNotice.className = "lab-notice lab-notice-warning";
+        labNotice.textContent = "La traza alcanzó el límite de eventos. La compilación continuó, pero la visualización contiene únicamente los primeros pasos.";
+    } else if (syntaxTrace.length === 0) {
+        const lexicalErrorsList = result.erroresLexicos || [];
+        const emptySource = !syntaxLabSource.trim();
+        labNotice.className = "lab-notice lab-notice-info";
+        labNotice.textContent = lexicalErrorsList.length
+            ? "El lexer encontró errores y el pipeline no ejecutó el parser; por eso no existe una traza sintáctica."
+            : emptySource
+                ? "La entrada está vacía; el parser no se ejecutó y no hay pasos que mostrar."
+                : "El parser no produjo eventos para esta solicitud.";
+    } else {
+        labNotice.className = (result.erroresSintacticos || []).length
+            ? "lab-notice lab-notice-error"
+            : "lab-notice lab-notice-success";
+        labNotice.textContent = (result.erroresSintacticos || []).length
+            ? "El análisis contiene errores. Recorre la traza para observar su detección y recuperación; el AST mostrado es parcial."
+            : "Traza completa recibida. Recorre los eventos a tu propio ritmo.";
+    }
+
+    renderLabSource(null);
+    updateTraceControls();
+}
+
+function showTraceStep(index) {
+    if (!syntaxTrace.length) return;
+    pauseSyntaxTrace();
+    syntaxTraceIndex = Math.max(0, Math.min(index, syntaxTrace.length - 1));
+    const step = syntaxTrace[syntaxTraceIndex];
+    labStepCounter.textContent = `Paso ${syntaxTraceIndex + 1} / ${syntaxTrace.length}`;
+    renderLabSource(step);
+    renderLabEvent(step);
+    updateTraceControls();
+}
+
+function renderLabEvent(step) {
+    labEvent.replaceChildren();
+    labEvent.className = `lab-event event-${String(step.evento || "").toLowerCase()}`;
+    labEvent.style.setProperty("--trace-depth", Math.max(0, Number(step.profundidad) || 0));
+
+    const badge = document.createElement("strong");
+    badge.className = "lab-event-type";
+    badge.textContent = formatEventName(step.evento);
+    const details = createDefinitionList([
+        ["Paso", step.numero],
+        ["Función activa", step.funcion || "—"],
+        ["Token del evento", step.tokenActual ?? "—"],
+        ["Tipo de token", step.tipoToken ?? "—"],
+        ["Ubicación", validLocation(step) ? `Línea ${step.linea}, columna ${step.columna}` : "No disponible"],
+        ["Profundidad de llamadas", step.profundidad]
+    ]);
+    const description = createParagraph(step.descripcion || "Sin descripción didáctica.");
+    description.className = "lab-description";
+    labEvent.append(badge, details, description);
+
+    labProduction.textContent = step.produccion || "Sin producción asociada a este evento.";
+    labProduction.classList.toggle("active", Boolean(step.produccion));
+    labFunction.textContent = `Función Java: ${step.funcion ? `${step.funcion}()` : "—"}`;
+    labBuiltNode.textContent = step.evento === "CONSTRUIR_NODO"
+        ? `Nodo construido: ${step.nodoTipo || "NODO"}${step.nodoValor ? ` (${step.nodoValor})` : ""}`
+        : "Ningún nodo construido en este paso.";
+    labBuiltNode.classList.toggle("active", step.evento === "CONSTRUIR_NODO");
+}
+
+function renderLabSource(step) {
+    const code = document.createElement("code");
+    const normalizedSource = syntaxLabSource.replace(/\r\n?/g, "\n");
+    labSource.replaceChildren(code);
+    labLocation.textContent = validLocation(step)
+        ? `Token ${step.tokenActual ?? "—"} · línea ${step.linea}, columna ${step.columna}`
+        : "Este evento no posee una ubicación de token inequívoca.";
+
+    if (!step || !validLocation(step) || !step.tokenActual) {
+        code.textContent = normalizedSource || "Sin código fuente.";
+        return;
+    }
+
+    const lines = normalizedSource.split("\n");
+    const lineIndex = step.linea - 1;
+    if (lineIndex < 0 || lineIndex >= lines.length) {
+        code.textContent = normalizedSource;
+        return;
+    }
+    const columnIndex = step.columna - 1;
+    const line = lines[lineIndex];
+    const token = String(step.tokenActual);
+    if (columnIndex < 0 || line.slice(columnIndex, columnIndex + token.length) !== token) {
+        code.textContent = normalizedSource;
+        labLocation.textContent += " No se resaltó porque la posición no coincide exactamente con el texto.";
+        return;
+    }
+
+    const offset = lines.slice(0, lineIndex).reduce((total, value) => total + value.length + 1, 0) + columnIndex;
+    code.appendChild(document.createTextNode(normalizedSource.slice(0, offset)));
+    const highlight = document.createElement("mark");
+    highlight.className = step.evento === "ERROR_SINTACTICO" ? "token-error" : "token-current";
+    highlight.textContent = normalizedSource.slice(offset, offset + token.length);
+    code.appendChild(highlight);
+    code.appendChild(document.createTextNode(normalizedSource.slice(offset + token.length)));
+}
+
+function renderLabAst(ast, syntaxErrorList) {
+    labAstContent.replaceChildren();
+    labAstContent.className = "";
+    if (!ast) {
+        showEmpty(labAstContent, "No hay AST porque el parser no se ejecutó.");
+        labAstLabel.textContent = "AST no disponible.";
+        return;
+    }
+    labAstLabel.textContent = syntaxErrorList.length
+        ? "AST parcial generado durante un análisis con errores."
+        : "AST final generado por el parser.";
+    const tree = document.createElement("ul");
+    tree.className = "ast-tree lab-ast-tree";
+    tree.appendChild(createAstNode(ast));
+    labAstContent.appendChild(tree);
+}
+
+function playSyntaxTrace() {
+    if (!syntaxTrace.length || syntaxTraceTimer !== null) return;
+    if (syntaxTraceIndex >= syntaxTrace.length - 1) {
+        syntaxTraceIndex = -1;
+    }
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const interval = reducedMotion ? 1300 : 850;
+    labPlay.disabled = true;
+    labPause.disabled = false;
+    syntaxTraceTimer = window.setInterval(() => {
+        if (syntaxTraceIndex >= syntaxTrace.length - 1) {
+            pauseSyntaxTrace();
+            return;
+        }
+        syntaxTraceIndex += 1;
+        const step = syntaxTrace[syntaxTraceIndex];
+        labStepCounter.textContent = `Paso ${syntaxTraceIndex + 1} / ${syntaxTrace.length}`;
+        renderLabSource(step);
+        renderLabEvent(step);
+        updateTraceControls(true);
+    }, interval);
+}
+
+function pauseSyntaxTrace() {
+    if (syntaxTraceTimer !== null) {
+        window.clearInterval(syntaxTraceTimer);
+        syntaxTraceTimer = null;
+    }
+    updateTraceControls();
+}
+
+function resetSyntaxPlayback() {
+    pauseSyntaxTrace();
+    syntaxTraceIndex = -1;
+    labStepCounter.textContent = `Paso 0 / ${syntaxTrace.length}`;
+    renderLabSource(null);
+    showEmpty(labEvent, "Selecciona un paso para ver el evento.");
+    labProduction.textContent = "Sin producción asociada.";
+    labProduction.classList.remove("active");
+    labFunction.textContent = "Función Java: —";
+    labBuiltNode.textContent = "Ningún nodo construido en este paso.";
+    labBuiltNode.classList.remove("active");
+    updateTraceControls();
+}
+
+function resetSyntaxLab(message) {
+    pauseSyntaxTrace();
+    syntaxTrace = [];
+    syntaxTraceIndex = -1;
+    syntaxLabSource = sourceCode.value;
+    labNotice.className = "lab-notice";
+    labNotice.textContent = message;
+    labStepCounter.textContent = "Paso 0 / 0";
+    renderLabSource(null);
+    showEmpty(labEvent, "La traza todavía no está disponible.");
+    labProduction.textContent = "Sin producción asociada.";
+    labFunction.textContent = "Función Java: —";
+    labBuiltNode.textContent = "Ningún nodo construido en este paso.";
+    labAstLabel.textContent = "El AST aparecerá después del análisis.";
+    showEmpty(labAstContent, "El AST final aparecerá aquí.");
+    updateTraceControls();
+}
+
+function updateTraceControls(reproduciendo = syntaxTraceTimer !== null) {
+    const hasTrace = syntaxTrace.length > 0;
+    labPrevious.disabled = !hasTrace || syntaxTraceIndex <= 0 || reproduciendo;
+    labNext.disabled = !hasTrace || syntaxTraceIndex >= syntaxTrace.length - 1 || reproduciendo;
+    labPlay.disabled = !hasTrace || reproduciendo;
+    labPause.disabled = !reproduciendo;
+    labReset.disabled = !hasTrace || (syntaxTraceIndex < 0 && !reproduciendo);
+}
+
+function validLocation(step) {
+    return step && Number.isInteger(step.linea) && step.linea > 0
+        && Number.isInteger(step.columna) && step.columna > 0;
+}
+
+function formatEventName(eventName) {
+    return String(eventName || "EVENTO").replaceAll("_", " ").toLowerCase()
+        .replace(/^./, (letter) => letter.toUpperCase());
 }
 
 function setLoading(loading) {
@@ -238,6 +488,7 @@ function renderCompilation(result) {
         result.erroresSintacticos, result.erroresSemanticos);
     renderNeander(result.neander, result.erroresLexicos,
         result.erroresSintacticos, result.erroresSemanticos);
+    renderSyntaxLab(result);
 }
 
 function renderTokens(tokens = [], errors = []) {
@@ -549,6 +800,7 @@ function showEmpty(container, message) {
 }
 
 function renderConnectionError(error) {
+    pauseSyntaxTrace();
     setStatus("status-error", "✗ Error de conexión");
     resultMessage.textContent = error.message || "No fue posible conectar con el servidor.";
     renderErrors(lexicalErrors, [resultMessage.textContent], "Conexión", "Conexión");
@@ -562,6 +814,7 @@ function renderConnectionError(error) {
     neanderDiagnostics.replaceChildren();
     showEmpty(neanderContent, "Código NEANDER no disponible.");
     showEmpty(neanderData, "Memoria NEANDER no disponible.");
+    resetSyntaxLab("No se recibió una traza debido al error de conexión.");
 }
 
 function setStatus(className, text) {

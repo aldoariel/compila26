@@ -175,6 +175,9 @@ class CompilerServiceTest {
                 service.compilar("int x; x = 10 * 5;");
 
         assertTrue(resultado.exitoso());
+        assertEquals(
+                CompilerService.EstadoCompilacion.CODIGO_INTERMEDIO_GENERADO_CON_LIMITACION_OBJETIVO,
+                resultado.estado());
         assertEquals(List.of("t0 = 10 * 5", "x = t0"), resultado.codigoIntermedio());
         assertTrue(resultado.neander().ejecutado());
         assertFalse(resultado.neander().exitoso());
@@ -188,6 +191,7 @@ class CompilerServiceTest {
                 service.compilar("int x; x = y + 10;");
 
         assertFalse(resultado.exitoso());
+        assertEquals(CompilerService.EstadoCompilacion.ERROR_SEMANTICO, resultado.estado());
         assertFalse(resultado.neander().ejecutado());
         assertFalse(resultado.neander().exitoso());
         assertTrue(resultado.neander().instrucciones().isEmpty());

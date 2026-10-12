@@ -657,6 +657,11 @@ x = t1</code></pre><i>↓</i>
 x = 10 + 5 * 2;</textarea>
 
             <div class="examples" aria-label="Ejemplos">
+                <button type="button" class="example-button lab-example" data-code="int x;">Declaración</button>
+                <button type="button" class="example-button lab-example" data-code="int x;&#10;x = 10;">Asignación</button>
+                <button type="button" class="example-button lab-example" data-code="int x;&#10;x = 10 + 5 * 2;">Precedencia</button>
+                <button type="button" class="example-button lab-example" data-code="int x;&#10;x = (10 + 5) * 2;">Paréntesis</button>
+                <button type="button" class="example-button lab-example" data-code="int x;&#10;x = 10 + ;">Error sintáctico</button>
                 <button type="button" class="example-button" data-code="int a;&#10;int b;&#10;int x;&#10;a = 10;&#10;b = 5;&#10;x = a + b;">NEANDER: suma</button>
                 <button type="button" class="example-button" data-code="int a;&#10;int b;&#10;int x;&#10;a = 10;&#10;b = 5;&#10;x = a - b;">NEANDER: resta</button>
                 <button type="button" class="example-button" data-code="int x;&#10;x = 10 * 5;">Límite NEANDER</button>
@@ -664,6 +669,11 @@ x = 10 + 5 * 2;</textarea>
                 <button type="button" class="example-button" data-code="int x;&#10;x = 10 + ;">Error sintáctico</button>
                 <button type="button" class="example-button" data-code="int x;&#10;x = y + 10;">Error semántico</button>
             </div>
+
+            <label class="trace-option" for="syntax-lab-enabled">
+                <input id="syntax-lab-enabled" type="checkbox">
+                <span><b>Activar laboratorio sintáctico</b> Genera la traza real del parser en esta compilación.</span>
+            </label>
 
             <button id="compile-button" class="compile-button" type="submit">
                 <span>Compilar</span>
@@ -685,16 +695,17 @@ x = 10 + 5 * 2;</textarea>
             Ejecuta el programa para observar cada fase del compilador.
         </p>
 
-        <nav class="tabs" aria-label="Resultados por fase">
-            <button type="button" class="tab active" data-panel="tokens-panel" aria-selected="true">Léxico / Tokens</button>
-            <button type="button" class="tab" data-panel="ast-panel" aria-selected="false">Sintáctico / AST</button>
-            <button type="button" class="tab" data-panel="semantic-panel" aria-selected="false">Semántico</button>
-            <button type="button" class="tab" data-panel="intermediate-panel" aria-selected="false">Código intermedio</button>
-            <button type="button" class="tab" data-panel="neander-panel" aria-selected="false">Código objetivo / NEANDER</button>
+        <nav class="tabs" role="tablist" aria-label="Resultados por fase">
+            <button id="tokens-tab" type="button" role="tab" class="tab active" data-panel="tokens-panel" aria-controls="tokens-panel" aria-selected="true">Léxico / Tokens</button>
+            <button id="ast-tab" type="button" role="tab" class="tab" data-panel="ast-panel" aria-controls="ast-panel" aria-selected="false">Sintáctico / AST</button>
+            <button id="syntax-lab-tab" type="button" role="tab" class="tab" data-panel="syntax-lab-panel" aria-controls="syntax-lab-panel" aria-selected="false">Laboratorio sintáctico</button>
+            <button id="semantic-tab" type="button" role="tab" class="tab" data-panel="semantic-panel" aria-controls="semantic-panel" aria-selected="false">Semántico</button>
+            <button id="intermediate-tab" type="button" role="tab" class="tab" data-panel="intermediate-panel" aria-controls="intermediate-panel" aria-selected="false">Código intermedio</button>
+            <button id="neander-tab" type="button" role="tab" class="tab" data-panel="neander-panel" aria-controls="neander-panel" aria-selected="false">Código objetivo / NEANDER</button>
         </nav>
 
         <div class="tab-content">
-            <section id="tokens-panel" class="tab-panel active" aria-label="Tokens">
+            <section id="tokens-panel" class="tab-panel active" role="tabpanel" aria-labelledby="tokens-tab">
                 <div class="phase-heading">
                     <div><span class="phase-kicker">Fase 1</span><h3>Análisis léxico</h3></div>
                     <button type="button" class="help-button" data-help="lexical" aria-label="Ayuda sobre análisis léxico">?</button>
@@ -703,7 +714,7 @@ x = 10 + 5 * 2;</textarea>
                 <div id="tokens-content" class="empty-state">Los tokens aparecerán aquí.</div>
             </section>
 
-            <section id="ast-panel" class="tab-panel" aria-label="Árbol sintáctico" hidden>
+            <section id="ast-panel" class="tab-panel" role="tabpanel" aria-labelledby="ast-tab" hidden>
                 <div class="phase-heading">
                     <div><span class="phase-kicker">Fase 2</span><h3>Análisis sintáctico</h3></div>
                     <button type="button" class="help-button" data-help="syntax" aria-label="Ayuda sobre análisis sintáctico">?</button>
@@ -712,7 +723,56 @@ x = 10 + 5 * 2;</textarea>
                 <div id="ast-content" class="empty-state">El AST aparecerá aquí.</div>
             </section>
 
-            <section id="semantic-panel" class="tab-panel" aria-label="Análisis semántico" hidden>
+            <section id="syntax-lab-panel" class="tab-panel" role="tabpanel" aria-labelledby="syntax-lab-tab" hidden>
+                <div class="phase-heading lab-heading">
+                    <div>
+                        <span class="phase-kicker">Laboratorio interactivo</span>
+                        <h3>Análisis sintáctico paso a paso</h3>
+                    </div>
+                    <output id="lab-step-counter" class="lab-step-counter" aria-live="polite">Paso 0 / 0</output>
+                </div>
+
+                <div id="lab-notice" class="lab-notice" role="status">
+                    Activa el laboratorio y compila para obtener la traza del parser.
+                </div>
+
+                <div class="lab-controls" role="group" aria-label="Controles de reproducción de la traza">
+                    <button id="lab-previous" type="button" aria-label="Ir al paso anterior" disabled>Anterior</button>
+                    <button id="lab-next" type="button" aria-label="Ir al paso siguiente" disabled>Siguiente</button>
+                    <button id="lab-play" type="button" aria-label="Reproducir la traza" disabled>Reproducir</button>
+                    <button id="lab-pause" type="button" aria-label="Pausar la reproducción" disabled>Pausar</button>
+                    <button id="lab-reset" type="button" aria-label="Reiniciar la traza" disabled>Reiniciar</button>
+                </div>
+
+                <div class="syntax-lab-grid">
+                    <article class="lab-card lab-source-card">
+                        <h4> A — Código fuente</h4>
+                        <p id="lab-location" class="lab-location">Sin ubicación seleccionada.</p>
+                        <pre id="lab-source" class="lab-source"><code>La fuente analizada aparecerá aquí.</code></pre>
+                    </article>
+
+                    <article class="lab-card lab-process-card">
+                        <h4>B — Proceso sintáctico</h4>
+                        <div id="lab-event" class="empty-state" aria-live="polite">Selecciona un paso para ver el evento.</div>
+                        <div class="lab-grammar">
+                            <span>Producción activa</span>
+                            <code id="lab-production">Sin producción asociada.</code>
+                            <small id="lab-function">Función Java: —</small>
+                        </div>
+                    </article>
+
+                    <article class="lab-card lab-ast-card">
+                        <h4>C — AST final</h4>
+                        <p id="lab-ast-label" class="lab-ast-label">El AST aparecerá después del análisis.</p>
+                        <div id="lab-built-node" class="lab-built-node">Ningún nodo construido en este paso.</div>
+                        <div id="lab-ast-content" class="empty-state">El AST final aparecerá aquí.</div>
+                    </article>
+                </div>
+
+                <p class="lab-limitation">El evento muestra el nodo construido, pero no lo resalta en el árbol cuando tipo y valor son ambiguos porque la traza todavía no incluye identificadores únicos de nodo.</p>
+            </section>
+
+            <section id="semantic-panel" class="tab-panel" role="tabpanel" aria-labelledby="semantic-tab" hidden>
                 <div class="phase-heading">
                     <div><span class="phase-kicker">Fase 3</span><h3>Análisis semántico</h3></div>
                     <button type="button" class="help-button" data-help="semantic" aria-label="Ayuda sobre análisis semántico">?</button>
@@ -729,7 +789,7 @@ x = 10 + 5 * 2;</textarea>
                 </div>
             </section>
 
-            <section id="intermediate-panel" class="tab-panel" aria-label="Código intermedio" hidden>
+            <section id="intermediate-panel" class="tab-panel" role="tabpanel" aria-labelledby="intermediate-tab" hidden>
                 <div class="phase-heading">
                     <div><span class="phase-kicker">Fase 4</span><h3>Código intermedio</h3></div>
                     <div class="phase-actions">
@@ -740,7 +800,7 @@ x = 10 + 5 * 2;</textarea>
                 <div id="intermediate-content" class="empty-state">Las instrucciones aparecerán aquí.</div>
             </section>
 
-            <section id="neander-panel" class="tab-panel" aria-label="Código objetivo NEANDER" hidden>
+            <section id="neander-panel" class="tab-panel" role="tabpanel" aria-labelledby="neander-tab" hidden>
                 <div class="phase-heading">
                     <div><span class="phase-kicker">Fase 5</span><h3>Código objetivo / NEANDER</h3></div>
                     <div class="phase-actions">

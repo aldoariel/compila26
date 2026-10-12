@@ -24,6 +24,7 @@ class CompilerControllerTest {
                         .content("{\"codigo\":\"int x; x = 10 + 5 * 2;\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.exitoso").value(true))
+                .andExpect(jsonPath("$.estado").value("CODIGO_INTERMEDIO_GENERADO_CON_LIMITACION_OBJETIVO"))
                 .andExpect(jsonPath("$.codigoFuente").value("int x; x = 10 + 5 * 2;"))
                 .andExpect(jsonPath("$.tokens.length()").value(11))
                 .andExpect(jsonPath("$.ast.tipo").value("PROGRAMA"))
@@ -45,11 +46,29 @@ class CompilerControllerTest {
                         .content("{\"codigo\":\"int x; x = 10 + 5;\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.exitoso").value(true))
+                .andExpect(jsonPath("$.estado").value("CODIGO_OBJETIVO_GENERADO"))
                 .andExpect(jsonPath("$.neander.ejecutado").value(true))
                 .andExpect(jsonPath("$.neander.exitoso").value(true))
                 .andExpect(jsonPath("$.neander.instrucciones[0]").value("LDA 82H"))
                 .andExpect(jsonPath("$.neander.instrucciones[5]").value("HLT"))
                 .andExpect(jsonPath("$.neander.datos[0].nombre").value("x"))
                 .andExpect(jsonPath("$.neander.datos[0].direccion").value("80H"));
+    }
+
+    @Test
+    void conservarRespuestaControladaParaCodigoNuloYVacio() throws Exception {
+        MockMvc mockMvc = MockMvcBuilders
+                .standaloneSetup(new CompilerController(new CompilerService()))
+                .build();
+
+        for (String contenido : new String[] {"{\"codigo\":null}", "{\"codigo\":\"\"}"}) {
+            mockMvc.perform(post("/api/compiler/compile")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(contenido))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.exitoso").value(false))
+                    .andExpect(jsonPath("$.estado").value("ENTRADA_INVALIDA"))
+                    .andExpect(jsonPath("$.mensaje").value("El código fuente está vacío."));
+        }
     }
 }

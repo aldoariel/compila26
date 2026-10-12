@@ -102,9 +102,38 @@ class ParserTest {
 
         assertFalse(resultado.parser().esExitoso());
         assertEquals(2, resultado.parser().getErrores().size());
+        assertTrue(resultado.parser().getErrores().get(0)
+                .contains("al final de la entrada (EOF), l\u00ednea 1, columna 9"));
         NodoAST suma = expresionDePrimeraAsignacion(resultado.ast());
         assertNodo(suma, "OPERADOR", "+");
         assertEquals("ERROR", suma.getHijos().get(1).getTipo());
+    }
+
+    @Test
+    void ubicarFactorInvalidoEnLineaYColumna() {
+        Resultado resultado = analizar("int x;\nx = 10 + ;");
+
+        assertFalse(resultado.parser().esExitoso());
+        assertTrue(resultado.parser().getErrores().get(0)
+                .contains("cerca de ';' en l\u00ednea 2, columna 10"));
+    }
+
+    @Test
+    void ubicarParentesisFaltanteEnElTokenActual() {
+        Resultado resultado = analizar("int x;\nx = (10 + 5;");
+
+        assertFalse(resultado.parser().esExitoso());
+        assertTrue(resultado.parser().getErrores().stream()
+                .anyMatch(error -> error.contains("Se esperaba ')' cerca de ';' en l\u00ednea 2, columna 12")));
+    }
+
+    @Test
+    void ubicarPuntoYComaFaltanteAlInicioDeLaSiguienteLinea() {
+        Resultado resultado = analizar("int x\nx = 10;");
+
+        assertFalse(resultado.parser().esExitoso());
+        assertTrue(resultado.parser().getErrores().get(0)
+                .contains("Se esperaba ';' cerca de 'x' en l\u00ednea 2, columna 1"));
     }
 
     @Test

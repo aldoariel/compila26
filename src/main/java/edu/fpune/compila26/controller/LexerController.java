@@ -2,8 +2,8 @@ package edu.fpune.compila26.controller;
 
 import edu.fpune.compila26.dto.AnalisislexicoResponse;
 import edu.fpune.compila26.dto.ErrorResponse;
+import edu.fpune.compila26.service.CodigoFuenteDemasiadoGrandeException;
 import edu.fpune.compila26.service.LexerService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,15 +16,18 @@ import java.util.Map;
 @CrossOrigin(origins = "*")             // ← Permite acceso desde cualquier origen
 public class LexerController {
 
-    @Autowired                          // ← Inyección de dependencia
-    private LexerService lexerService;  // ← Usa LexerService
+    private final LexerService lexerService;
+
+    public LexerController(LexerService lexerService) {
+        this.lexerService = lexerService;
+    }
 
     // ENDPOINT 1: POST /api/lexer/analizar
     @PostMapping("/analizar")           // ← URL completa: /api/lexer/analizar
     public ResponseEntity<?> analizar(@RequestBody Map<String, String> request) {
         try {
             // 1. EXTRAER PARÁMETRO
-            String codigoFuente = request.get("codigo");
+            String codigoFuente = request == null ? null : request.get("codigo");
 
             // 2. VALIDAR
             if (codigoFuente == null || codigoFuente.trim().isEmpty()) {
@@ -43,6 +46,8 @@ public class LexerController {
             // 4. RETORNAR RESPUESTA EXITOSA
             return ResponseEntity.ok(respuesta);  // ← HTTP 200 + JSON
 
+        } catch (CodigoFuenteDemasiadoGrandeException e) {
+            throw e;
         } catch (IllegalArgumentException e) {
             // 5. MANEJO DE ERROR: ArgumentoInválido
             return ResponseEntity
